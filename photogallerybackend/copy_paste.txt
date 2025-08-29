@@ -1,0 +1,15 @@
+‎---
+‎
+‎2. User & 
+‎
+‎[ ] Create Custom User model (with email as username)
+‎
+‎[ ] Install django-allauth & dj-rest-auth for OAuth2 / social logins
+‎
+‎[ ] Add Google, GitHub, or Facebook OAuth provider
+‎
+‎[ ] Secure endpoints with JWT (SimpleJWT or dj-rest-auth tokens)
+‎
+‎
+‎
+‎---
