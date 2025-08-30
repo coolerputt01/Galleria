@@ -16,14 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-from django.http import HTTPResponse
+from django.http import HttpResponse
 
-def home():
-  return HTTPResponse("Photo Gallery API is live!")
-
+def home(request):
+  return HttpResponse("Photo Gallery API is live!")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',home, name="home"),
-    path('/api/', include(router.urls)),
+    path('api/',home, name="home"),
+    path('api/auth/',include('accounts.urls'))
 ]

@@ -1,11 +1,11 @@
 from django.db import models
-from django.contrib.auth.model import AbstractBaseUser,PermissionMixin
+from django.contrib.auth.models import AbstractBaseUser,PermissionsMixin
 from .managers import CustomUserManager
 
 import uuid
 # Create your models here.
 
-class User(AbstractBaseUser,PermissionMixin):
+class User(AbstractBaseUser,PermissionsMixin):
   uid = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False,unique=True)
   email = models.EmailField(unique=True)
   display_name = models.CharField(max_length=25,unique=True)
