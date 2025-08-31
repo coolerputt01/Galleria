@@ -1,16 +1,5 @@
-from rest_framework.generics import RetrieveAPIView
-from rest_framework.exceptions import NotFound
-from .models import User
-from .serializers import PublicProfileSerializer
-
-class PublicProfileView(RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = PublicProfileSerializer
-    lookup_field = "display_name"
-
-    def get_object(self):
-        try:
-            return super().get_object()
-        except Exception:
-            # Custom 404 response
-            raise NotFound(detail="This profile does not exist. Please check the username.")
+class IsVerifiedOrReadOnly(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in ["GET", "HEAD", "OPTIONS"]:
+            return True
+        return request.user and request.user.is_authenticated and request.user.is_verified
