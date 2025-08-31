@@ -1,76 +1,16 @@
-import uuid
-from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.exceptions import NotFound
+from .models import User
+from .serializers import PublicProfileSerializer
 
+class PublicProfileView(RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = PublicProfileSerializer
+    lookup_field = "display_name"
 
-class UserManager(BaseUserManager):
-    def create_user(self, email, display_name, password=None, **extra_fields):
-        if not email:
-            raise ValueError("Email is required")
-        email = self.normalize_email(email)
-        user = self.model(email=email, display_name=display_name, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, email, display_name, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        return self.create_user(email, display_name, password, **extra_fields)
-
-
-class User(AbstractBaseUser, PermissionsMixin):
-    uid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    email = models.EmailField(unique=True)
-    display_name = models.CharField(max_length=150, unique=True)
-    profile_url = models.URLField(blank=True, null=True)
-    profile_picture = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
-    bio = models.TextField(blank=True)
-
-    # Required by Django admin & PermissionsMixin
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-
-    objects = UserManager()
-
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["display_name"]
-
-    def __str__(self):
-        return self.display_name
-        
-        
-        ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/?verification=1'
-ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/?verification=1'
-
-
-
-INSTALLED_APPS = [
-    ...
-    "django.contrib.sites",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "dj_rest_auth",
-    "dj_rest_auth.registration",
-    "rest_framework",
-]
-
-SITE_ID = 1
-
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-}
+    def get_object(self):
+        try:
+            return super().get_object()
+        except Exception:
+            # Custom 404 response
+            raise NotFound(detail="This profile does not exist. Please check the username.")

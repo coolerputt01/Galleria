@@ -9,7 +9,6 @@ class User(AbstractBaseUser,PermissionsMixin):
   uid = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False,unique=True)
   email = models.EmailField(unique=True)
   display_name = models.CharField(max_length=25,unique=True)
-  profileUrl = models.URLField(blank=True,null=True)
   pfp = models.ImageField(upload_to="pfps/",blank=True,null=True)
   bio = models.TextField(blank=True)
   is_active = models.BooleanField(default=True)
