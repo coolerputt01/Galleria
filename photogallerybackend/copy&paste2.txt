@@ -1,5 +1,33 @@
-class IsVerifiedOrReadOnly(BasePermission):
-    def has_permission(self, request, view):
-        if request.method in ["GET", "HEAD", "OPTIONS"]:
-            return True
-        return request.user and request.user.is_authenticated and request.user.is_verified
+from PIL import Image
+import io
+from django.core.files.base import ContentFile
+
+class Photo(models.Model):
+    album = models.ForeignKey(Album, related_name="photos", on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True, null=True)
+    image = models.ImageField(upload_to="photos/")
+    resolution = models.CharField(max_length=50, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.image:
+            img = Image.open(self.image)
+
+            # upscale the image (2x here, adjust as needed)
+            width, height = img.size
+            new_width, new_height = width * 2, height * 2
+            img = img.resize((new_width, new_height), Image.LANCZOS)
+
+            # save new resolution in the field
+            self.resolution = f"{new_width}x{new_height}"
+
+            # convert back to file and replace
+            img_io = io.BytesIO()
+            img.save(img_io, format="JPEG", quality=95)
+            self.image.save(self.image.name, ContentFile(img_io.getvalue()), save=False)
+
+        # auto-generate name if not provided
+        if not self.name:
+            count = Photo.objects.count() + 1
+            self.name = f"Photo {count}"
+
+        super().save(*args, **kwargs)

@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
   
   class Meta:
     model = User
-    fields = ['display_name','email','profileUrl','bio','password','pfp']
+    fields = ['display_name','email','bio','password','pfp']
     
 class PublicUserProfileSerializer(serializers.ModelSerializer):
   profile_url = serializers.SerializerMethodField()
