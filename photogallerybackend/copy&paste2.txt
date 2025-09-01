@@ -1,33 +1,62 @@
-from PIL import Image
-import io
-from django.core.files.base import ContentFile
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .models import Album, Photo
+from .serializers import AlbumSerializer, PhotoSerializer
+from .permissions import IsUserVerifiedReadOnly
 
-class Photo(models.Model):
-    album = models.ForeignKey(Album, related_name="photos", on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, blank=True, null=True)
-    image = models.ImageField(upload_to="photos/")
-    resolution = models.CharField(max_length=50, blank=True, null=True)
+# -----------------------
+# Album Views
+# -----------------------
 
-    def save(self, *args, **kwargs):
-        if self.image:
-            img = Image.open(self.image)
+class AlbumListCreateView(generics.ListCreateAPIView):
+    serializer_class = AlbumSerializer
+    permission_classes = [IsUserVerifiedReadOnly]
 
-            # upscale the image (2x here, adjust as needed)
-            width, height = img.size
-            new_width, new_height = width * 2, height * 2
-            img = img.resize((new_width, new_height), Image.LANCZOS)
+    def get_queryset(self):
+        # Public albums + user's own private albums
+        user = self.request.user
+        if user.is_authenticated:
+            return Album.objects.filter(
+                is_public=True
+            ) | Album.objects.filter(user=user)
+        else:
+            return Album.objects.filter(is_public=True)
 
-            # save new resolution in the field
-            self.resolution = f"{new_width}x{new_height}"
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
-            # convert back to file and replace
-            img_io = io.BytesIO()
-            img.save(img_io, format="JPEG", quality=95)
-            self.image.save(self.image.name, ContentFile(img_io.getvalue()), save=False)
 
-        # auto-generate name if not provided
-        if not self.name:
-            count = Photo.objects.count() + 1
-            self.name = f"Photo {count}"
+class AlbumDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AlbumSerializer
+    permission_classes = [IsUserVerifiedReadOnly]
+    queryset = Album.objects.all()
 
-        super().save(*args, **kwargs)
+
+# -----------------------
+# Photo Views
+# -----------------------
+
+class PhotoListCreateView(generics.ListCreateAPIView):
+    serializer_class = PhotoSerializer
+    permission_classes = [IsUserVerifiedReadOnly]
+
+    def get_queryset(self):
+        user = self.request.user
+        # Photos in public albums + photos in user's own albums
+        if user.is_authenticated:
+            return Photo.objects.filter(album__is_public=True) | Photo.objects.filter(album__user=user)
+        else:
+            return Photo.objects.filter(album__is_public=True)
+
+    def perform_create(self, serializer):
+        album = serializer.validated_data.get("album")
+        # Ensure user can only add photos to their own albums
+        if album.user != self.request.user:
+            raise PermissionDenied("You cannot add photos to someone else's album.")
+        serializer.save()
+
+
+class PhotoDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PhotoSerializer
+    permission_classes = [IsUserVerifiedReadOnly]
+    queryset = Photo.objects.all()

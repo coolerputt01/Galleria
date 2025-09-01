@@ -12,6 +12,7 @@ class Album(models.Model):
   album_name = models.CharField(default="Gallery",null=False,blank=False,max_length=30,unique=True)
   album_desc = models.TextField(null=True,blank=True)
   created_at = models.DateTimeField(auto_now_add=True)
+  is_public = models.BooleanField(default=True,null=False,blank=False)
   
   def __str__(self):
     return self.album_name
