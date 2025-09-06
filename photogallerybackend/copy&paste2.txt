@@ -1,62 +1,12 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .models import Album, Photo
-from .serializers import AlbumSerializer, PhotoSerializer
-from .permissions import IsUserVerifiedReadOnly
-
-# -----------------------
-# Album Views
-# -----------------------
-
-class AlbumListCreateView(generics.ListCreateAPIView):
-    serializer_class = AlbumSerializer
-    permission_classes = [IsUserVerifiedReadOnly]
-
-    def get_queryset(self):
-        # Public albums + user's own private albums
-        user = self.request.user
-        if user.is_authenticated:
-            return Album.objects.filter(
-                is_public=True
-            ) | Album.objects.filter(user=user)
-        else:
-            return Album.objects.filter(is_public=True)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-class AlbumDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = AlbumSerializer
-    permission_classes = [IsUserVerifiedReadOnly]
-    queryset = Album.objects.all()
-
-
-# -----------------------
-# Photo Views
-# -----------------------
-
-class PhotoListCreateView(generics.ListCreateAPIView):
-    serializer_class = PhotoSerializer
-    permission_classes = [IsUserVerifiedReadOnly]
-
-    def get_queryset(self):
-        user = self.request.user
-        # Photos in public albums + photos in user's own albums
-        if user.is_authenticated:
-            return Photo.objects.filter(album__is_public=True) | Photo.objects.filter(album__user=user)
-        else:
-            return Photo.objects.filter(album__is_public=True)
-
-    def perform_create(self, serializer):
-        album = serializer.validated_data.get("album")
-        # Ensure user can only add photos to their own albums
-        if album.user != self.request.user:
-            raise PermissionDenied("You cannot add photos to someone else's album.")
-        serializer.save()
-
-
-class PhotoDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = PhotoSerializer
-    permission_classes = [IsUserVerifiedReadOnly]
-    queryset = Photo.objects.all()
+def get(self, request, pk):
+    album = get_object_or_404(Album, pk=pk)
+    is_liked = album.likes.filter(user=request.user).exists()
+    return Response({
+        "likes": album.likes.count(),
+        "is_liked": is_liked
+    }, status=status.HTTP_200_OK)
+    
+    
+  from django.db.models import Sum
+def get_view_count(self, obj):
+    return obj.views.aggregate(total=Sum("count"))["total"] or 0

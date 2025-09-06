@@ -15,6 +15,7 @@ class SignupUserView(generics.CreateAPIView):
     token = VerificationToken.create_token(User)
   
 class LoginUserView(APIView):
+  permission_classes = [permissions.AllowAny]
   def post(self,request):
     email = request.data['email']
     password = request.data['password']
@@ -23,7 +24,7 @@ class LoginUserView(APIView):
       token , create= Token.objects.get_or_create(user=user)
       return Response({
         "encrypted_virus": token.key
-      },status=201)
+      },status=200)
     else:
       return Response({
         "error":"Credentials are Invalid"
