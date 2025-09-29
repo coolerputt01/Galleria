@@ -31,7 +31,33 @@ class VerificationToken(models.Model):
   expires_at = models.DateTimeField()
   
   def is_expired(self):
-    return timezone.now() > selff.expires_at
+    return timezone.now() > self.expires_at
   @classmethod
   def create_token(cls, user, expiry_minutes=5):
     return cls.objects.create(user=user,expires_at=timezone.now() + timedelta(minutes=expiry_minutes))
+  
+class Badge(models.Model):
+   user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="badges")
+   badge_name = models.CharField(blank=False, null=False, max_length=25)
+   badge_photo = models.CharField(blank=False, null=False, max_length=50)
+    
+   class Meta():
+     unique_together = ("user","badge_name")
+      
+   def __str__(self):
+        return f"{self.badge_name}"
+     
+class Theme(models.Model):
+  name = models.CharField(blank=False,null=False,max_length=25)
+  primary_color = models.CharField(blank=False,null=False,max_length=7)
+  secondary_color = models.CharField(blank=False,null=False,max_length=7)
+  
+  def __str__(self):
+    return f"{self.name}"
+
+class UserTheme(models.Model):
+  user = models.OneToOneField(User,on_delete=models.CASCADE,related_name="theme")
+  theme = models.ForeignKey(Theme,on_delete=models.CASCADE,related_name="Theme")
+  
+  def __str__(self):
+    return f"{self.user} has {self.theme}"

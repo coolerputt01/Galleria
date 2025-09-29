@@ -3,6 +3,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
+from .tasks import send_mail
 from .serialisers import UserSerializer,PublicUserProfileSerializer
 from .models import User, VerificationToken
 from django.contrib.auth import authenticate
@@ -13,6 +14,7 @@ class SignupUserView(generics.CreateAPIView):
   def perform_create(self,serializer):
     user = serializer.save(is_verified=False)
     token = VerificationToken.create_token(User)
+    send_mail.delay(user.email, token,user.display_name)
   
 class LoginUserView(APIView):
   permission_classes = [permissions.AllowAny]
@@ -49,9 +51,7 @@ class VerifyUserToken(APIView):
     try:
       token = VerificationToken.objects.get(token=token)
     except VerificationToken.DoesNotExist:
-      return Response({
-        "error":"Verfication Link does not exist"
-      },status=status.HTTP_400_BAD_REQUEST)
+      return Response({"error":"Verfication Token does not exist"},status=status.HTTP_400_BAD_REQUEST)
     
     if token.is_expired():
       return Response({

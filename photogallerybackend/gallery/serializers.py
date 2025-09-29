@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Photo,Album,PhotoView
 from django.db.models import Sum
+from django.urls import reverse
 
 class PhotoSerializer(serializers.ModelSerializer):
   view_count = serializers.SerializerMethodField()
@@ -12,12 +13,16 @@ class PhotoSerializer(serializers.ModelSerializer):
 
 class AlbumSerializer(serializers.ModelSerializer):
   photos = PhotoSerializer(many=True,read_only=True)
+  album_link = serializers.SerializerMethodField()
   likes = serializers.SerializerMethodField()
   class Meta:
     model = Album
-    fields = ["id","user","album_name","album_desc","created_at","photos","is_public","is_pinned","likes"]
+    fields = ["id","user","album_name","album_desc","created_at","photos","is_public","is_pinned","likes","album_link"]
     read_only_fields = ["user"]
     
+  def get_album_link(self,obj):
+    request = self.context.get("request")
+    return request.build_absolute_uri(reverse('album',kwargs={'pk':obj.pk}))
   def get_likes(self,obj):
     return obj.likes.count()
   

@@ -30,6 +30,13 @@ ALLOWED_HOSTS = []
 env = environ.Env()
 environ.Env.read_env()
 
+EMAIL_BACKEND = 'django_mailjet.backends.MailjetBackend'
+MAILJET_API_KEY = env("MAILJET_API_KEY")
+MAILJET_API_SECRET = env("MAILJET_API_SECRET")
+DEFAULT_FROM_EMAIL="coolerputt@gmail.com"
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+
 # Application definition
 
 INSTALLED_APPS = [

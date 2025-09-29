@@ -1,12 +1,21 @@
-def get(self, request, pk):
-    album = get_object_or_404(Album, pk=pk)
-    is_liked = album.likes.filter(user=request.user).exists()
-    return Response({
-        "likes": album.likes.count(),
-        "is_liked": is_liked
-    }, status=status.HTTP_200_OK)
-    
-    
-  from django.db.models import Sum
-def get_view_count(self, obj):
-    return obj.views.aggregate(total=Sum("count"))["total"] or 0
+from mailjet_rest import Client
+import os
+api_key = os.environ['MJ_APIKEY_PUBLIC']
+api_secret = os.environ['MJ_APIKEY_PRIVATE']
+mailjet = Client(auth=(api_key, api_secret), version='v3')
+data = {
+  'FromEmail': "pilot@mailjet.com",
+  'FromName': "Your Mailjet Pilot",
+  'Recipients': [
+    {
+      "Email": "passenger@mailjet.com",
+      "Name": "Passenger 1"
+    }
+  ],
+  'Subject': "Your email flight plan!",
+  'Text-part': "Dear passenger, welcome to Mailjet! May the delivery force be with you!",
+  'Html-part': "<h3>Dear passenger, welcome to Mailjet!</h3><br />May the delivery force be with you!"
+}
+result = mailjet.send.create(data=data)
+print result.status_code
+print result.json()
