@@ -18,9 +18,23 @@ jobs:
         ports: ["5432:5432"]
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-python@v4
-        with:
+      with:
           python-version: 3.12
-      - run: pip install -r requirements.txt
-      - run: python manage.py migrate
-      - run: python manage.py test
+    
+      - name: Install dependencies
+        run: |
+          cd photogallerybackend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+    
+      - name: Run migrations
+        run: |
+          cd photogallerybackend
+          python manage.py migrate
+    
+      - name: Run tests
+        run: |
+          cd photogallerybackend
+          python manage.py test --keepdb
