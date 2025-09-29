@@ -35,7 +35,7 @@ class Photo(models.Model):
   photo_img = models.ImageField(upload_to='photos/',blank=False,null=False)
   created_at = models.DateTimeField(auto_now_add=True)
   album = models.ForeignKey(Album,on_delete=models.CASCADE,related_name="photo")
-  resolution = models.CharField(max_length=10)
+  resolution = models.CharField(max_length=20)
   
   def save(self,*args,**kwargs):
     if self.photo_img:
